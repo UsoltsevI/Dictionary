@@ -1,8 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <string.h>
 #include "uhashmap.h"
 
-int main() {
+void check_ans(size_t *ans_arr, size_t num_ans);
+
+int main(int argc, char * *argv) {
     size_t num_ans = 0;
     size_t len_dic = 0;
     size_t len_ans = 0;
@@ -80,9 +84,34 @@ int main() {
 
     uhmap_delmap(&hmap);
 
+    if ((argc == 2) && (!strcmp(argv[1], "check")))
+        check_ans(ans_arr, num_ans);
+
     free(buf_dic);
     free(buf_ser);
     free(ans_arr);
 
     return 0;
+}
+
+void check_ans(size_t *ans_arr, size_t num_ans) {
+    assert(ans_arr != NULL);
+    size_t a = 0;
+    int res_scanf = 0;
+
+    for (size_t i = 0; i < num_ans; i++) {
+        res_scanf = scanf("%lu", &a);
+
+        if (res_scanf != 1) {
+            printf("failure reading ans\n");
+            return;
+        }
+
+        if (a != ans_arr[i]) {
+            printf("FAILURE\n");
+            return;
+        }
+    }
+
+    printf("OK\n");
 }

@@ -9,3 +9,6 @@ main.o: main.c
 
 clean:
 	rm *.o *.x
+
+test:
+	for i in $$(seq 0 1 5); do echo Tests/Test$${i}.txt && ./h.x check < Tests/Test$${i}.txt; done

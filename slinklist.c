@@ -13,7 +13,7 @@ struct sllist {
     void  *content;
 };
 
-void sllist_addelm(struct sllist * *list, const void *new_elem, size_t size_elem) {
+void sllist_addelm(struct sllist * *list, size_t is_multi_set, const void *new_elem, size_t size_elem) {
     if ((list == NULL) || (new_elem == NULL)) {
         PERROR_NULLPTR;
         return;
@@ -36,8 +36,18 @@ void sllist_addelm(struct sllist * *list, const void *new_elem, size_t size_elem
         }
 
     } else {
-        while (last->next != NULL)
-            last = last->next;
+        if (is_multi_set) {
+            while (last->next != NULL)
+                last = last->next;
+
+        } else {
+            while (last->next != NULL) {
+                if ((last->size == size_elem) && (!memcmp(last->content, new_elem, size_elem)))
+                    return;
+
+                last = last->next;
+            }
+        }
 
         last->next = (struct sllist *) calloc(1, sizeof(struct sllist));
 
@@ -89,6 +99,7 @@ int sllist_delelm(struct sllist * *list, const void *del_elem, size_t size_elem)
             free(last->next->content);
             struct sllist *tofree = last->next;
             last->next = last->next->next;
+            free(tofree->content);
             free(tofree);
             return 1;
         }
@@ -99,7 +110,91 @@ int sllist_delelm(struct sllist * *list, const void *del_elem, size_t size_elem)
     return 0;
 }
 
-size_t sllist_serelm(struct sllist *list, const void *ser_elem, size_t size_elem) {
+void sllist_getelm(struct sllist *list, void * *buf, size_t *size_elem, size_t numelm) {
+    if ((list == NULL) || (*buf == NULL) || (size_elem == NULL)) {
+        PERROR_NULLPTR;
+        return;
+    }
+
+    if (*buf != NULL) {
+        PERROR_PREFIX; fprintf(stderr, "*buf != NULL\n");
+        return;
+    }
+
+    size_t counter = 0;
+
+    while ((list != NULL) && (counter < numelm)) {
+        list = list->next;
+        counter++;
+    }
+
+    if (list == NULL)
+        return;
+
+    *buf = malloc(list->size);
+    memcpy(*buf, list->content, list->size);
+    *size_elem = list->size;
+}
+
+
+void sllist_getdel(struct sllist * *list, void * *buf, size_t *size_elem, size_t numelm) {
+    if ((list == NULL) || (buf == NULL) || (size_elem == NULL)) {
+        PERROR_NULLPTR;
+        return;
+    }
+
+    if (*buf != NULL) {
+        PERROR_PREFIX; fprintf(stderr, "*buf != NULL\n");
+        return;
+    }
+
+    if (*list == NULL)
+        return;
+
+    if (numelm == 0) {
+        *buf = malloc((*list)->size);
+
+        if (*buf == NULL) {
+            PERROR_FALLOC;
+            return;
+        }
+
+        memcpy(*buf, (*list)->content, (*list)->size);
+        struct sllist *tofree = *list;
+        *list = (*list)->next;
+        free(tofree);
+        return;
+    }
+
+    size_t counter = 0;
+    struct sllist *last = *list;
+
+    while ((last->next != NULL) && (counter < numelm)) {
+        last = last->next;
+        counter++;
+    }
+
+    if (last->next == NULL)
+        return;
+
+    *buf = malloc(last->size);
+
+    if (*buf == NULL) {
+        PERROR_FALLOC;
+        return;
+    }
+
+    memcpy(*buf, last->next->content, last->next->size);
+    *size_elem = last->next->size;
+
+    struct sllist *tofree = last;
+
+    last->next = last->next->next;
+    free(tofree->content);
+    free(tofree);
+}
+
+size_t sllist_serelm(struct sllist *list, size_t is_multi_set, const void *ser_elem, size_t size_elem) {
     if (ser_elem == NULL) {
         PERROR_NULLPTR;
         return 0;
@@ -115,11 +210,21 @@ size_t sllist_serelm(struct sllist *list, const void *ser_elem, size_t size_elem
 
     size_t res = 0;
 
-    while (list != NULL) {
-        if ((list->size == size_elem) && (!memcmp(list->content, ser_elem, size_elem)))
-            res++;
+    if (is_multi_set) {
+        while (list != NULL) {
+            if ((list->size == size_elem) && (!memcmp(list->content, ser_elem, size_elem)))
+                res++;
 
-        list = list->next;
+            list = list->next;
+        }
+
+    } else {
+        while (list != NULL) {
+            if ((list->size == size_elem) && (!memcmp(list->content, ser_elem, size_elem)))
+                return 1;
+
+            list = list->next;
+        }
     }
 
     return res;
@@ -161,3 +266,6 @@ void sllist_prints(struct sllist *list) {
     printf("NULL\n");
 }
 
+#undef PERROR_PREFIX
+#undef PERROR_FALLOC
+#undef PERROR_NULLPTR

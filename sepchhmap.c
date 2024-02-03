@@ -233,3 +233,4 @@ static int check_input_data(struct uhmap *hmap, const void *elem, size_t size_el
 #undef PERROR_PREFIX
 #undef PERROR_FALLOC
 #undef PERROR_NULLPTR
+#undef CHECK_INPUT_DATA

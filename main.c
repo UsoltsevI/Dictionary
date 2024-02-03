@@ -54,7 +54,7 @@ int main(int argc, char * *argv) {
     size_t *ans_arr = (size_t *) calloc(num_ans + 1, sizeof(size_t));
     char   *buf_dic = (char   *) calloc(len_dic + 2, sizeof(char  ));
     struct uhmap *hmap = new_uhmap(len_dic / 2, 1);
-    
+
     for (size_t i = 0; i < len_dic; i++) {
         num_scanf = scanf("%c", &buf_dic[i]);
 
@@ -96,6 +96,10 @@ int main(int argc, char * *argv) {
 
     last_space = 1;
     size_t index_ans = 0;
+
+    // this function is only availible for compilation with files hmchaining.c and uhashmap.c
+    // the file sepchhmap.c does not have a resizing function
+    uhmap_resize(&hmap, uhmap_mpsize(hmap) * 12);
 
     for (size_t i = 0; i < len_ans; i++) {
         if (buf_ser[i] == ' ') {

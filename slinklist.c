@@ -284,7 +284,7 @@ void sllist_getdel(struct sllist * *list, void * *buf, size_t *size_elem, size_t
         return;
     }
 
-    *buf = malloc(last->size);
+    *buf = malloc(last->next->size);
 
     if (*buf == NULL) {
         PERROR_FALLOC;

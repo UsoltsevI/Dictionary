@@ -53,7 +53,7 @@ int main(int argc, char * *argv) {
 
     size_t *ans_arr = (size_t *) calloc(num_ans + 1, sizeof(size_t));
     char   *buf_dic = (char   *) calloc(len_dic + 2, sizeof(char  ));
-    struct uhmap *hmap = new_uhmap(len_dic / 2, 1);
+    struct uhmap *hmap = new_uhmap(len_dic * 2, 1);
 
     for (size_t i = 0; i < len_dic; i++) {
         num_scanf = scanf("%c", &buf_dic[i]);

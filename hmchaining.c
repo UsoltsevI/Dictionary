@@ -140,14 +140,13 @@ void uhmap_resize(struct uhmap * *hmap, size_t new_size) {
 
     struct uhmap *new_hmap = new_uhmap(new_size, (*hmap)->is_multi_set);
 
-    new_hmap->a = (*hmap)->a % new_size;
-
     if (new_hmap == NULL) {
         PERROR_FALLOC;
         return;
     }
 
-    new_hmap->top = (*hmap)->top;
+    new_hmap->a    = (*hmap)->a % new_size;
+    new_hmap->top  = (*hmap)->top;
 
     if (new_hmap->top == NULL) {
         free((*hmap)->map);
@@ -160,11 +159,11 @@ void uhmap_resize(struct uhmap * *hmap, size_t new_size) {
     struct sllist *cur  = (*hmap)->top;
     struct sllist *next = sllist_getnxt((*hmap)->top);
 
-    void  *buf  = NULL;
-    size_t size = 0;
+    void  *buf   = NULL;
+    size_t size  = 0;
     size_t hash1 = 0, hash2 = 0;
 
-    assert(cur != NULL);
+    assert(cur  != NULL);
 
     sllist_getelm(cur, &buf, &size, 0);
 
@@ -186,8 +185,13 @@ void uhmap_resize(struct uhmap * *hmap, size_t new_size) {
 
     new_hmap->map[hash1]->list = cur;
     new_hmap->map[hash1]->num  = 1;
+    new_hmap->num_elem        += 1;
 
     if (next == NULL) {
+        assert(new_hmap->num_elem == (*hmap)->num_elem);
+
+        uhmap_delmap(hmap);
+
         free((*hmap)->map);
         free( *hmap);
 
@@ -207,6 +211,7 @@ void uhmap_resize(struct uhmap * *hmap, size_t new_size) {
 
         if (hash2 == hash1) {
             new_hmap->map[hash1]->num += 1;
+            new_hmap->num_elem        += 1;
 
             hash1 = hash2;
 
@@ -225,6 +230,7 @@ void uhmap_resize(struct uhmap * *hmap, size_t new_size) {
 
                 new_hmap->map[hash2]->list = next;
                 new_hmap->map[hash2]->num  = 1;
+                new_hmap->num_elem        += 1;
 
                 hash1 = hash2;
 
@@ -238,10 +244,12 @@ void uhmap_resize(struct uhmap * *hmap, size_t new_size) {
                 sllist_getdel(&cur, &buf, &size, 1);
 
                 assert(buf != NULL);
+                assert(new_hmap->map[hash2]->list != NULL);
 
                 sllist_addelp(&(new_hmap->map[hash2]->list), new_hmap->is_multi_set, buf, size, 1);
 
                 new_hmap->map[hash2]->num += 1;
+                new_hmap->num_elem        += 1;
 
                 next = sllist_getnxt(cur);                
             }
@@ -251,6 +259,12 @@ void uhmap_resize(struct uhmap * *hmap, size_t new_size) {
         buf = NULL;
     }
 
+    new_hmap->last = cur;
+    assert(new_hmap->num_elem == (*hmap)->num_elem);
+
+    for (size_t i = 0; i < (*hmap)->size; i++)
+        free((*hmap)->map[i]);
+    
     free((*hmap)->map);
     free( *hmap);
 
@@ -306,8 +320,12 @@ void uhmap_delmap(struct uhmap * *hmap) {
 
     if (*hmap == NULL)
         return;
+
+    for (size_t i = 0; i < (*hmap)->size; i++)
+        free((*hmap)->map[i]);
     
     sllist_dellst(&(*hmap)->top);
+
     free((*hmap)->map);
     free( *hmap);
 }
